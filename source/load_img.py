@@ -1,5 +1,3 @@
-from customtkinter import CTkImage
-from PIL import Image
 from os import path
 
 

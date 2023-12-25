@@ -1,8 +1,11 @@
-from components import Components
+from frontend.components import Components
 from source.load_img import ImagesLoad
+from source.utils.fade import fade_out
+from source.shutdown import cancel_shutdown
+from tkinter.messagebox import askyesno
 
-import customtkinter as ctk
 from os import path
+import customtkinter as ctk
 
 
 class App(ctk.CTk):
@@ -22,18 +25,30 @@ class App(ctk.CTk):
         self.geometry(f"{self.win_width}x{self.win_height}+{width_plus}+{height_plus}")
         self.resizable(False, False)
 
-        match ctk.get_appearance_mode():
-            case "Dark": self.wm_iconbitmap(self.images.logo_bitmap_light)
-            case "Light": self.wm_iconbitmap(self.images.logo_bitmap_dark)
+        self.favicon_changer()
 
         ctk.set_default_color_theme(path.join(path.dirname(path.dirname(__file__)), "source", "assets", "themes",
-                                    "dark_blue.json"))
+                                              "theme.json"))
 
         self.title("Turnoc")
 
+        self.protocol("WM_DELETE_WINDOW", self.exit)
+
         self.components = Components(self)
 
+    def favicon_changer(self):
+        match ctk.get_appearance_mode():
+            case "Dark":
+                self.wm_iconbitmap(self.images.logo_bitmap_light)
+            case "Light":
+                self.wm_iconbitmap(self.images.logo_bitmap_dark)
 
-if __name__ == "__main__":
-    app = App()
-    app.mainloop()
+    def exit(self):
+        resolution = askyesno(message="Gostaria de fechar o programa?")
+        if not resolution:
+            return
+
+        fade_out(self)
+        if self.components.shutdown_assert:
+            cancel_shutdown(self, self.components)
+        self.destroy()

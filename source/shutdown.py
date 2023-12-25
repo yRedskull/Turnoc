@@ -1,17 +1,17 @@
 import os
+import subprocess
 
 from tkinter.messagebox import showerror, showinfo, showwarning, askyesno
-try:
-    from clock import shutdown_clock
-except ImportError:
-    from source.clock import shutdown_clock
+from source.clock import shutdown_clock
 
 
 def shutdown_time(master, components, times, mode):
+    final_times = dict()
+
     if not times or times == "0":
         return
 
-    final_times = 0
+    times = times.strip()
 
     match mode:
         case "Horas":
@@ -30,22 +30,26 @@ def shutdown_time(master, components, times, mode):
                 "mode": "Segundos"
             }
 
+    if final_times["seconds"] >= 315360000:
+        return showerror(message="Tempo máximo atingido!!!\n(0 - 315359999 segundos -> 10 anos)")
+
     result = accept_timer(times, final_times)
 
     if not result:
         return
 
     try:
-        os.system(f"shutdown /s /t {final_times['seconds']}")
+        command_exec(f"shutdown /s /t {final_times['seconds']}")
+
         components.btn_shutdown.configure(command=lambda: showwarning(message="Desligamento já agendado."))
 
         components.shutdown_assert = True
         components.final_times = final_times
 
         components.shutdown_clock.configure(text=shutdown_clock(components))
-        components.label_shutdown_clock.place(x=40, y=45)
-        components.shutdown_clock.place(x=components.master.win_width/2.35, y=45)
-        components.btn_cancel.place(x=master.win_width/2.6, y=master.win_height-50)
+        components.label_shutdown_clock.place(relx=.1, y=45)
+        components.shutdown_clock.place(relx=.3, y=45)
+        components.btn_cancel.place(relx=.35, y=master.win_height-50)
     except Exception as e:
         showerror(message=e)
 
@@ -57,19 +61,30 @@ def accept_timer(times, final_times):
     return askyesno(message=f"Deseja desligar o computador após {times} {mode}?",
                     icon="warning")
 
+
 def cancel_shutdown(master, components):
     if not components.shutdown_assert:
-        return
+        return False
+
     try:
-        os.system(f"shutdown /a")
+        command_exec(f"shutdown /a")
         components.btn_cancel.place_forget()
         components.btn_shutdown.configure(command=lambda: shutdown_time(master, components, components.input_time.get(),
                                                                         components.combobox_mode.get()))
         components.shutdown_clock.place_forget()
         components.label_shutdown_clock.place_forget()
-        showinfo(title="Informação", message="O desligamento foi cancelado!")
+        showinfo(message="O desligamento foi cancelado!")
+        components.shutdown_assert = False
+        return True
     except Exception as e:
-        showerror(title="Alert", message=e)
+        showerror(message=e)
+
+
+def command_exec(args):
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = subprocess.SW_HIDE
+    subprocess.Popen(args, startupinfo=startupinfo)
 
 
 def calc_hour(hours):

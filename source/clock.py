@@ -2,7 +2,7 @@ from datetime import datetime
 
 
 def current_clock(components):
-    now_clock_format = datetime.now().strftime("%H:%M:%S")
+    now_clock_format = datetime.now().strftime("%H:%M:%S %d/%m/%y")
 
     components.now_clock.configure(text=now_clock_format)
 
