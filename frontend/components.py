@@ -30,6 +30,7 @@ class Components:
 
         self.input_time = ctk.CTkEntry(master, corner_radius=0, border_color="#000000", validate='key',
                                        validatecommand=(validate_input, '%P'))
+        self.input_time.insert(0, "1")
 
         self.combobox_mode = ctk.CTkComboBox(master, values=["Horas", "Minutos", "Segundos"])
         self.combobox_mode.configure(state="readonly", dropdown_fg_color=["#ffffff", "#000000"])
