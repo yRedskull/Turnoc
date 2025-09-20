@@ -5,8 +5,8 @@ from source.clock import formater_clock, while_verification_shutdown, add_second
 from threading import Thread
 
 
-def shutdown_exec(components):
-    if components.shutdown_assert:
+def shutdown_exec(components, w):
+    if not components.shutdown_assert:
         return
 
     return command_exec(f"shutdown /s /t 0")  
