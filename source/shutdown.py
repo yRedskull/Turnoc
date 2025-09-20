@@ -1,8 +1,15 @@
-import os
 import subprocess
 
 from tkinter.messagebox import showerror, showinfo, showwarning, askyesno
-from source.clock import shutdown_clock
+from source.clock import formater_clock, while_verification_shutdown, add_seconds_in_timestamp_now
+from threading import Thread
+
+
+def shutdown_exec(components):
+    if components.shutdown_assert:
+        return
+
+    return command_exec(f"shutdown /s /t 0")  
 
 
 def shutdown_time(master, components, times, mode):
@@ -30,23 +37,22 @@ def shutdown_time(master, components, times, mode):
                 "mode": "Segundos"
             }
 
-    if final_times["seconds"] >= 315360000:
-        return showerror(message="Tempo máximo atingido!!!\n(0 - 315359999 segundos -> 10 anos)")
-
     result = accept_timer(times, final_times)
 
     if not result:
         return
 
     try:
-        command_exec(f"shutdown /s /t {final_times['seconds']}")
+        timestamp_shutdown = add_seconds_in_timestamp_now(final_times["seconds"])
 
         components.btn_shutdown.configure(command=lambda: showwarning(message="Desligamento já agendado."))
 
         components.shutdown_assert = True
         components.final_times = final_times
+        
+        Thread(target=lambda: shutdown_exec(components, while_verification_shutdown(master, int(timestamp_shutdown), components))).start()
 
-        components.shutdown_clock.configure(text=shutdown_clock(components))
+        components.shutdown_clock.configure(text=formater_clock(timestamp_shutdown))
         components.label_shutdown_clock.place(relx=.1, y=45)
         components.shutdown_clock.place(relx=.3, y=45)
         components.btn_cancel.place(relx=.35, y=master.win_height-50)
@@ -67,7 +73,6 @@ def cancel_shutdown(master, components):
         return False
 
     try:
-        command_exec(f"shutdown /a")
         components.btn_cancel.place_forget()
         components.btn_shutdown.configure(command=lambda: shutdown_time(master, components, components.input_time.get(),
                                                                         components.combobox_mode.get()))
